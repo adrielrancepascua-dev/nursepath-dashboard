@@ -55,7 +55,19 @@ export function Users() {
 
       userMap.forEach((events, identifier) => {
         const sessions = new Set(events.map((e) => e.session_id)).size
-        const totalDuration = events.reduce((sum, e) => sum + (e.duration_ms || 0), 0)
+        const completedSessionIds = new Set(
+          events
+            .filter((e) => e.feature === 'session' && e.action === 'session_end')
+            .map((e) => e.session_id)
+            .filter(Boolean)
+        )
+        const totalDuration = events.reduce((sum, e) => {
+          if (e.feature === 'session' && e.action === 'session_start' && !completedSessionIds.has(e.session_id)) {
+            return sum
+          }
+
+          return sum + (e.duration_ms || 0)
+        }, 0)
         const lastActive = events[0]?.timestamp || ''
         const featureCount = new Set(
           events.filter((e) => e.feature && e.feature !== 'session' && e.feature !== 'auth').map((e) => e.feature)
