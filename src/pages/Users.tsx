@@ -61,12 +61,14 @@ export function Users() {
             .map((e) => e.session_id)
             .filter(Boolean)
         )
+        const MAX_EVENT_DURATION_MS = 14_400_000 // 4 hours
         const totalDuration = events.reduce((sum, e) => {
           if (e.feature === 'session' && e.action === 'session_start' && !completedSessionIds.has(e.session_id)) {
             return sum
           }
 
-          return sum + (e.duration_ms || 0)
+          const d = e.duration_ms || 0
+          return sum + (d > 0 && d <= MAX_EVENT_DURATION_MS ? d : 0)
         }, 0)
         const lastActive = events[0]?.timestamp || ''
         const featureCount = new Set(
